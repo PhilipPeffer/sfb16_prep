@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libgit2-dev \
     libsodium-dev \
+    libuv1-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Quarto
