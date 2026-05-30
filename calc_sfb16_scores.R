@@ -5,8 +5,10 @@ library(nflreadr)
 library(tidyverse)
 
 # ── Player stats (2025 regular season) ───────────────────────────────────────
+main_pos   <- c("QB", "RB", "WR", "TE")
+
 player_stats <- load_player_stats(seasons = 2025) |>
-  filter(season_type == "REG")
+  filter(season_type == "REG", position %in% main_pos)
 
 # ── Play-by-play (2025 regular season) ───────────────────────────────────────
 pbp <- load_pbp(seasons = 2025) |>

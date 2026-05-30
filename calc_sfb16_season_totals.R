@@ -32,24 +32,40 @@ season <- weekly |>
     position            = last(position),
     team                = last(team),
     total_sfb16_fpts    = sum(sfb16_fpts),
+    mean_sfb16_ppg     = mean(sfb16_fpts),
+    median_sfb16_ppg   = median(sfb16_fpts),
+    total_ppr_fpts      = sum(fantasy_points_ppr),
+    mean_ppr_ppg        = mean(fantasy_points_ppr),
+    median_ppr_ppg      = median(fantasy_points_ppr),
     games_played        = n(),
     top10_overall_weeks = sum(top10_overall),
     top10_pos_weeks     = sum(top10_pos),
     .groups = "drop"
   ) |>
-  mutate(overall_rank = rank(-total_sfb16_fpts, ties.method = "min")) |>
+  mutate(
+    total_sfb16_rank = rank(-total_sfb16_fpts, ties.method = "min"),
+    mean_sfb16_ppg_rank = rank(-mean_sfb16_ppg, ties.method = "min"),
+    med_sfb16_ppg_rank = rank(-median_sfb16_ppg, ties.method = "min"),
+    total_ppr_rank = rank(-total_ppr_fpts, ties.method = "min"),
+    mean_ppr_ppg_rank = rank(-mean_ppr_ppg, ties.method = "min"),
+    med_ppr_ppg_rank = rank(-median_ppr_ppg, ties.method = "min")
+  ) |>
   group_by(position) |>
   mutate(position_rank = rank(-total_sfb16_fpts, ties.method = "min")) |>
   ungroup() |>
   left_join(weekly_wide, by = "player_id") |>
   select(
-    overall_rank, position_rank,
+    total_sfb16_rank, total_ppr_rank, position_rank,
+    mean_sfb16_ppg_rank, med_sfb16_ppg_rank,
+    mean_ppr_ppg_rank, med_ppr_ppg_rank,
     player_name, player_id, position, team,
-    total_sfb16_fpts, games_played,
+    total_sfb16_fpts, mean_sfb16_ppg, median_sfb16_ppg,
+    total_ppr_fpts, mean_ppr_ppg, median_ppr_ppg, games_played,
     top10_overall_weeks, top10_pos_weeks,
+    
     any_of(week_cols)
   ) |>
-  arrange(overall_rank)
+  arrange(total_sfb16_rank)
 
 # ── Save ──────────────────────────────────────────────────────────────────────
 saveRDS(season, "data/sfb16_season_totals.rds")
@@ -60,7 +76,7 @@ message("Done. Players: ", nrow(season), " | Columns: ", ncol(season))
 # ── Quick preview ─────────────────────────────────────────────────────────────
 cat("\n=== Top 20 overall ===\n")
 season |>
-  select(overall_rank, position_rank, player_name, position, team,
+  select(total_sfb16_rank, position_rank, player_name, position, team,
          total_sfb16_fpts, games_played, top10_overall_weeks, top10_pos_weeks) |>
   slice_head(n = 20) |>
   print(n = 20)
