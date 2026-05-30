@@ -77,25 +77,46 @@ per_game_avg <- top20_long |>
 #| fig-height: 5
 #| fig-cap: "Violin widths reflect point density; boxes show IQR and median; dots are individual players."
 
-p <- season |>
-  filter(games_played >= 8 & total_sfb16_fpts >= 50) |>
-  ggplot(aes(x = position, y = total_sfb16_fpts, fill = position, color = position, text = player_name)) +
-  geom_violin(alpha = 0.2, linewidth = 0, width = 0.8) +
-  geom_boxplot(
-    width = 0.18, outlier.shape = NA, alpha = 0.75,
-    color = "grey30", fill = NA, linewidth = 0.7
-  ) +
-  geom_jitter(width = 0.14, alpha = 0.35, size = 1.8) +
-  scale_fill_manual(values = pos_colors, guide = "none") +
-  scale_color_manual(values = pos_colors, guide = "none") +
-  scale_y_continuous(labels = label_comma()) +
-  labs(
-    title = "Season SFB16 Points by Position",
-    subtitle = "Players with ≥ 8 games played & ≥ 50 points",
-    x = NULL, y = "Season SFB16 Points"
+pos_levels <- c("QB", "RB", "WR", "TE")
+pos_idx    <- setNames(seq_along(pos_levels), pos_levels)
+set.seed(42)
+dat <- season |>
+  filter(position_rank <= 50) |>
+  mutate(
+    pos_num    = pos_idx[as.character(position)],
+    pos_jitter = pos_num + runif(n(), -0.12, 0.12)
   )
 
-ggplotly(p, tooltip = "text")
+p <- plot_ly(showlegend = FALSE)
+for (pos in pos_levels) {
+  d <- filter(dat, as.character(position) == pos)
+  p <- add_trace(p, data = d,
+    x = ~pos_num, y = ~total_sfb16_fpts,
+    type = "violin", name = pos,
+    fillcolor = pos_colors[[pos]], opacity = 0.8,
+    line     = list(color = "transparent"),
+    box      = list(visible = TRUE,
+                    line = list(color = "black", width = 1)),
+    meanline = list(visible = FALSE),
+    points   = FALSE, showlegend = FALSE
+  )
+}
+p |>
+  add_markers(
+    data = dat, x = ~pos_jitter, y = ~total_sfb16_fpts,
+    color = ~position, colors = pos_colors,
+    text          = ~player_name,
+    hovertemplate = "%{text}<extra></extra>",
+    marker        = list(opacity = 0.8, size = 4),
+    showlegend    = FALSE
+  ) |>
+  layout(
+    title = list(text = "<b>Season SFB16 Points by Position</b><br><sup>Players with ≥ 8 games played & ≥ 50 points</sup>"),
+    xaxis = list(tickmode = "array", tickvals = seq_along(pos_levels),
+                 ticktext = pos_levels, title = ""),
+    yaxis = list(title = "Season SFB16 Points", tickformat = ",d"),
+    showlegend = FALSE
+  )
 ```
 
 ```{r}
@@ -103,25 +124,44 @@ ggplotly(p, tooltip = "text")
 #| fig-height: 5
 #| fig-cap: "Violin widths reflect point density; boxes show IQR and median; dots are individual players."
 
-p <- season |>
-  filter(total_sfb16_fpts >= 50) |>
-  ggplot(aes(x = position, y = mean_sfb16_ppg, fill = position, color = position, text = player_name)) +
-  geom_violin(alpha = 0.2, linewidth = 0, width = 0.8) +
-  geom_boxplot(
-    width = 0.18, outlier.shape = NA, alpha = 0.75,
-    color = "grey30", fill = NA, linewidth = 0.7
-  ) +
-  geom_jitter(width = 0.14, alpha = 0.35, size = 1.8) +
-  scale_fill_manual(values = pos_colors, guide = "none") +
-  scale_color_manual(values = pos_colors, guide = "none") +
-  scale_y_continuous(labels = label_comma()) +
-  labs(
-    title = "Season Mean SFB16 Points Per Game by Position",
-    subtitle = "Players with ≥ 50 points",
-    x = NULL, y = "Season SFB16 Points"
+set.seed(42)
+dat <- season |>
+  filter(position_rank <= 50) |>
+  mutate(
+    pos_num    = pos_idx[as.character(position)],
+    pos_jitter = pos_num + runif(n(), -0.12, 0.12)
   )
 
-ggplotly(p, tooltip = "text")
+p <- plot_ly(showlegend = FALSE)
+for (pos in pos_levels) {
+  d <- filter(dat, as.character(position) == pos)
+  p <- add_trace(p, data = d,
+    x = ~pos_num, y = ~mean_sfb16_ppg,
+    type = "violin", name = pos,
+    fillcolor = pos_colors[[pos]], opacity = 0.8,
+    line     = list(color = "transparent"),
+    box      = list(visible = TRUE,
+                    line = list(color = "black", width = 1)),
+    meanline = list(visible = FALSE),
+    points   = FALSE, showlegend = FALSE
+  )
+}
+p |>
+  add_markers(
+    data = dat, x = ~pos_jitter, y = ~mean_sfb16_ppg,
+    color = ~position, colors = pos_colors,
+    text          = ~player_name,
+    hovertemplate = "%{text}<extra></extra>",
+    marker        = list(opacity = 0.8, size = 4),
+    showlegend    = FALSE
+  ) |>
+  layout(
+    title = list(text = "<b>Season Mean SFB16 Points Per Game by Position</b><br><sup>Players with ≥ 50 points</sup>"),
+    xaxis = list(tickmode = "array", tickvals = seq_along(pos_levels),
+                 ticktext = pos_levels, title = ""),
+    yaxis = list(title = "Mean SFB16 PPG", tickformat = ".1f"),
+    showlegend = FALSE
+  )
 ```
 
 ```{r}
@@ -129,25 +169,44 @@ ggplotly(p, tooltip = "text")
 #| fig-height: 5
 #| fig-cap: "Violin widths reflect point density; boxes show IQR and median; dots are individual players."
 
-p <- season |>
-  filter(total_sfb16_fpts >= 50) |>
-  ggplot(aes(x = position, y = median_sfb16_ppg, fill = position, color = position, text = player_name)) +
-  geom_violin(alpha = 0.2, linewidth = 0, width = 0.8) +
-  geom_boxplot(
-    width = 0.18, outlier.shape = NA, alpha = 0.75,
-    color = "grey30", fill = NA, linewidth = 0.7
-  ) +
-  geom_jitter(width = 0.14, alpha = 0.35, size = 1.8) +
-  scale_fill_manual(values = pos_colors, guide = "none") +
-  scale_color_manual(values = pos_colors, guide = "none") +
-  scale_y_continuous(labels = label_comma()) +
-  labs(
-    title = "Season Median SFB16 Points Per Game by Position",
-    subtitle = "Players with ≥ 50 points",
-    x = NULL, y = "Season SFB16 Points"
+set.seed(42)
+dat <- season |>
+  filter(position_rank <= 50) |>
+  mutate(
+    pos_num    = pos_idx[as.character(position)],
+    pos_jitter = pos_num + runif(n(), -0.12, 0.12)
   )
 
-ggplotly(p, tooltip = "text")
+p <- plot_ly(showlegend = FALSE)
+for (pos in pos_levels) {
+  d <- filter(dat, as.character(position) == pos)
+  p <- add_trace(p, data = d,
+    x = ~pos_num, y = ~median_sfb16_ppg,
+    type = "violin", name = pos,
+    fillcolor = pos_colors[[pos]], opacity = 0.8,
+    line     = list(color = "transparent"),
+    box      = list(visible = TRUE,
+                    line = list(color = "black", width = 1)),
+    meanline = list(visible = FALSE),
+    points   = FALSE, showlegend = FALSE
+  )
+}
+p |>
+  add_markers(
+    data = dat, x = ~pos_jitter, y = ~median_sfb16_ppg,
+    color = ~position, colors = pos_colors,
+    text          = ~player_name,
+    hovertemplate = "%{text}<extra></extra>",
+    marker        = list(opacity = 0.8, size = 4),
+    showlegend    = FALSE
+  ) |>
+  layout(
+    title = list(text = "<b>Season Median SFB16 Points Per Game by Position</b><br><sup>Players with ≥ 50 points</sup>"),
+    xaxis = list(tickmode = "array", tickvals = seq_along(pos_levels),
+                 ticktext = pos_levels, title = ""),
+    yaxis = list(title = "Median SFB16 PPG", tickformat = ".1f"),
+    showlegend = FALSE
+  )
 ```
 
 ### Top 30 Players
