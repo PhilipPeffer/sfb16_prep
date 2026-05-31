@@ -2,7 +2,7 @@ suppressPackageStartupMessages(library(tidyverse))
 
 weekly <- readRDS("data/sfb16_weekly_scores.rds")
 
-# ── Weekly ranks (used for top-10 counting) ───────────────────────────────────
+# ── Weekly ranks (used for top-n counting) ───────────────────────────────────
 weekly <- weekly |>
   group_by(week) |>
   mutate(weekly_overall_rank = rank(-sfb16_fpts, ties.method = "min")) |>
@@ -11,7 +11,7 @@ weekly <- weekly |>
   mutate(weekly_pos_rank = rank(-sfb16_fpts, ties.method = "min")) |>
   ungroup() |>
   mutate(
-    top10_overall = weekly_overall_rank <= 10,
+    top20_overall = weekly_overall_rank <= 20,
     top10_pos     = weekly_pos_rank     <= 10
   )
 
@@ -38,7 +38,7 @@ season <- weekly |>
     mean_ppr_ppg        = mean(fantasy_points_ppr),
     median_ppr_ppg      = median(fantasy_points_ppr),
     games_played        = n(),
-    top10_overall_weeks = sum(top10_overall),
+    top20_overall_weeks = sum(top20_overall),
     top10_pos_weeks     = sum(top10_pos),
     .groups = "drop"
   ) |>
@@ -61,7 +61,7 @@ season <- weekly |>
     player_name, player_id, position, team,
     total_sfb16_fpts, mean_sfb16_ppg, median_sfb16_ppg,
     total_ppr_fpts, mean_ppr_ppg, median_ppr_ppg, games_played,
-    top10_overall_weeks, top10_pos_weeks,
+    top20_overall_weeks, top10_pos_weeks,
     
     any_of(week_cols)
   ) |>
@@ -77,6 +77,6 @@ message("Done. Players: ", nrow(season), " | Columns: ", ncol(season))
 cat("\n=== Top 20 overall ===\n")
 season |>
   select(total_sfb16_rank, position_rank, player_name, position, team,
-         total_sfb16_fpts, games_played, top10_overall_weeks, top10_pos_weeks) |>
+         total_sfb16_fpts, games_played, top20_overall_weeks, top10_pos_weeks) |>
   slice_head(n = 20) |>
   print(n = 20)
