@@ -239,7 +239,7 @@ season |>
   )
 ```
 
-### Consistency: Weekly Top-10 Finishes
+### Consistency: Weekly Top-20 Finishes (Overall Top 50)
 
 ```{r}
 #| label: fig-topN-counts
@@ -269,40 +269,37 @@ season |>
   theme(panel.grid.major.y = element_blank())
 ```
 
-## Top 50 Players — Weekly Score Breakdown
-
-### Heatmap
+### Consistency: Weekly Top-20 Finishes (Top 50 @ each position)
 
 ```{r}
-#| label: fig-heatmap
-#| fig-height: 7
-#| fig-cap: "Grey tiles = bye or inactive. Ordered top-to-bottom by season total."
+#| label: fig-topN-counts2
+#| fig-height: 18
+#| fig-cap: "Overall = top 20 among all players that week. Position = top 10 at their position that week."
 
-top50_long |>
-  ggplot(aes(x = week, y = player_label, fill = fpts)) +
-  geom_tile(color = "white", linewidth = 0.7) +
-  geom_text(
-    data = top50_long |> filter(!is.na(fpts)),
-    aes(label = round(fpts, 0)),
-    size = 2.7, color = "white", fontface = "bold"
-  ) +
-  scale_fill_gradient(
-    low = "#aed6f1", high = "#1a5276",
-    na.value = "grey88",
-    labels = label_comma(),
-    guide  = guide_colorbar(barwidth = 12, barheight = 0.5, title.position = "top")
-  ) +
-  scale_x_continuous(breaks = 1:18, expand = expansion(0)) +
+season |>
+  filter(position_rank <= 50 & top20_overall_weeks > 0) |>
+  mutate(label = paste0(player_name, " (", team, ")") |> fct_reorder(top20_overall_weeks)) |>
+  pivot_longer(
+    c(top20_overall_weeks, top10_pos_weeks),
+    names_to = "type", values_to = "count"
+  ) |>
+  mutate(type = recode(type,
+    top20_overall_weeks = "Overall Top 10",
+    top10_pos_weeks     = "Position Top 10"
+  )) |>
+  ggplot(aes(x = count, y = label, fill = type)) +
+  geom_col(position = "dodge", alpha = 0.85, width = 0.7) +
+  scale_fill_manual(values = c("Overall Top 20" = "#2c7bb6", "Position Top 10" = "#abd9e9")) +
+  scale_x_continuous(breaks = 0:18) +
   labs(
-    title    = "Top 50 Players — Weekly SFB16 Scores",
-    subtitle = "Grey = bye / inactive · ordered by season total",
-    x = "Week", y = NULL, fill = "Points"
+    title = "Weekly Top-20 Finish Counts — Top 50 Players",
+    subtitle = "Overall (all positions) vs. within position · max 18 weeks",
+    x = "Weeks in Overall Top 20 / Position Top 10", y = NULL, fill = NULL
   ) +
-  theme(
-    panel.grid  = element_blank(),
-    axis.text.y = element_text(size = 10)
-  )
+  theme(panel.grid.major.y = element_blank())
 ```
+
+## Top 50 Players — Weekly Score Breakdown
 
 ### Weekly Score Distributions
 
@@ -351,6 +348,88 @@ top50_long |>
     position = position_jitter(height = 0.18, seed = 42),
     alpha = 0.65, size = 2.2
   ) +
+  scale_fill_manual(values = pos_colors) +
+  scale_color_manual(values = pos_colors) +
+  scale_x_continuous(labels = label_comma()) +
+  labs(
+    title    = "Weekly Score Distributions — Top 50 Players",
+    subtitle = "Box = IQR · Dots = individual weekly scores · ordered by season total",
+    x = "Weekly SFB16 Points", y = NULL,
+    fill = NULL, color = NULL
+  ) +
+  theme(panel.grid.major.y = element_blank())
+```
+
+## PPR-SFB16 Comparison
+
+### P
+
+```{r}
+#| label: fig-total-sfb-vs-ppr
+#| fig-height: 14
+#| fig-cap: "Box spans IQR; line = median. Dots are individual weekly scores. Ordered by season total."
+
+season |>
+  filter(position_rank <= 50) |>
+  ggplot(aes(x = total_ppr_fpts, y = total_sfb16_fpts, fill = position, color = position)) +
+  geom_point(
+    alpha = 0.65, size = 2.2
+  ) +
+  geom_smooth(method = "lm") +
+  facet_wrap(~ position, scales = "free") +
+  scale_fill_manual(values = pos_colors) +
+  scale_color_manual(values = pos_colors) +
+  scale_x_continuous(labels = label_comma()) +
+  labs(
+    title    = "Weekly Score Distributions — Top 50 Players",
+    subtitle = "Box = IQR · Dots = individual weekly scores · ordered by season total",
+    x = "Weekly SFB16 Points", y = NULL,
+    fill = NULL, color = NULL
+  ) +
+  theme(panel.grid.major.y = element_blank())
+```
+
+### P
+
+```{r}
+#| label: fig-total-sfb-vs-ppr-ranks1
+#| fig-height: 14
+#| fig-cap: "Box spans IQR; line = median. Dots are individual weekly scores. Ordered by season total."
+
+season |>
+  filter(position_rank <= 50) |>
+  ggplot(aes(x = total_ppr_rank, y = total_sfb16_rank, fill = position, color = position)) +
+  geom_point(
+    data = season |> filter(position_rank <= 50),
+    alpha = 0.65, size = 2.2
+  ) +
+  scale_fill_manual(values = pos_colors) +
+  scale_color_manual(values = pos_colors) +
+  scale_x_continuous(labels = label_comma()) +
+  labs(
+    title    = "Weekly Score Distributions — Top 50 Players",
+    subtitle = "Box = IQR · Dots = individual weekly scores · ordered by season total",
+    x = "Weekly SFB16 Points", y = NULL,
+    fill = NULL, color = NULL
+  ) +
+  theme(panel.grid.major.y = element_blank())
+```
+
+### P
+
+```{r}
+#| label: fig-total-sfb-vs-ppr-ranks2
+#| fig-height: 14
+#| fig-cap: "Box spans IQR; line = median. Dots are individual weekly scores. Ordered by season total."
+
+season |>
+  filter(position_rank <= 50) |>
+  ggplot(aes(x = total_ppr_rank, y = total_sfb16_rank, fill = position, color = position)) +
+  geom_point(
+    alpha = 0.65, size = 2.2
+  ) +
+  geom_smooth(method = "lm") +
+  facet_wrap(~ position, scales = "free") +
   scale_fill_manual(values = pos_colors) +
   scale_color_manual(values = pos_colors) +
   scale_x_continuous(labels = label_comma()) +
