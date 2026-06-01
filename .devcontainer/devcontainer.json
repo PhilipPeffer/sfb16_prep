@@ -12,7 +12,7 @@
     }
   },
   "postStartCommand": "sudo rstudio-server start",
-  "postCreateCommand": "R -e \"renv::restore(prompt = FALSE); renv::install('plotly'); renv::snapshot(prompt = FALSE)\"",
+  "postCreateCommand": "R -e \"renv::restore(prompt = FALSE)\"",
   "customizations": {
     "vscode": {
       "extensions": [
