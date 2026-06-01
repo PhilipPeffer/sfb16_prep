@@ -26,7 +26,7 @@ RUN QUARTO_VERSION=1.6.42 && \
     rm "quarto-${QUARTO_VERSION}-linux-amd64.deb"
 
 # Copy renv lockfile and restore packages
-WORKDIR /workspace
+WORKDIR /workspaces/sfb16_prep
 COPY renv.lock renv.lock
 
 RUN R -e "\
@@ -35,4 +35,4 @@ RUN R -e "\
 "
 
 # Set default working directory to /workspace in RStudio
-RUN echo 'session-default-working-dir=/workspace' >> /etc/rstudio/rsession.conf
+RUN echo 'session-default-working-dir=/workspaces/sfb16_prep' >> /etc/rstudio/rsession.conf
