@@ -29,11 +29,12 @@ season <- weekly |>
   group_by(player_id) |>
   summarize(
     player_name         = last(player_name),
+    player_display_name = last(player_display_name),
     position            = last(position),
     team                = last(team),
     total_sfb16_fpts    = sum(sfb16_fpts),
-    mean_sfb16_ppg     = mean(sfb16_fpts),
-    median_sfb16_ppg   = median(sfb16_fpts),
+    mean_sfb16_ppg      = mean(sfb16_fpts),
+    median_sfb16_ppg    = median(sfb16_fpts),
     total_ppr_fpts      = sum(fantasy_points_ppr),
     mean_ppr_ppg        = mean(fantasy_points_ppr),
     median_ppr_ppg      = median(fantasy_points_ppr),
@@ -58,7 +59,7 @@ season <- weekly |>
     total_sfb16_rank, total_ppr_rank, position_rank,
     mean_sfb16_ppg_rank, med_sfb16_ppg_rank,
     mean_ppr_ppg_rank, med_ppr_ppg_rank,
-    player_name, player_id, position, team,
+    player_name, player_display_name, player_id, position, team,
     total_sfb16_fpts, mean_sfb16_ppg, median_sfb16_ppg,
     total_ppr_fpts, mean_ppr_ppg, median_ppr_ppg, games_played,
     top20_overall_weeks, top10_pos_weeks,
