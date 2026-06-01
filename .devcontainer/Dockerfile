@@ -1,6 +1,7 @@
 FROM rocker/rstudio:4.6.0
 
 ENV DISABLE_AUTH=true
+ENV RENV_PATHS_CACHE=/usr/local/share/renv/cache
 
 # Install system dependencies for R packages and Quarto
 RUN apt-get update && apt-get install -y \
