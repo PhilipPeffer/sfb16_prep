@@ -1,5 +1,7 @@
 FROM rocker/rstudio:4.6.0
 
+ENV DISABLE_AUTH=true
+
 # Install system dependencies for R packages and Quarto
 RUN apt-get update && apt-get install -y \
     curl \
@@ -25,14 +27,10 @@ RUN QUARTO_VERSION=1.6.42 && \
     dpkg -i "quarto-${QUARTO_VERSION}-linux-amd64.deb" && \
     rm "quarto-${QUARTO_VERSION}-linux-amd64.deb"
 
-# Copy renv lockfile and restore packages
-WORKDIR /workspaces/sfb16_prep
-COPY renv.lock renv.lock
+# Pre-install renv and languageserver into the system library
+RUN R -e "install.packages(c('renv', 'languageserver'), repos = 'https://cloud.r-project.org')"
 
-RUN R -e "\
-  install.packages('renv', repos = 'https://cloud.r-project.org'); \
-  renv::restore(lockfile = 'renv.lock', library = '/usr/local/lib/R/site-library', prompt = FALSE) \
-"
-
-# Set default working directory to /workspace in RStudio
+# Set default working directory in RStudio
 RUN echo 'session-default-working-dir=/workspaces/sfb16_prep' >> /etc/rstudio/rsession.conf
+
+WORKDIR /workspaces/sfb16_prep

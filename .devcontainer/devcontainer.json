@@ -12,9 +12,7 @@
     }
   },
   "postStartCommand": "sudo rstudio-server start",
-  "remoteEnv": {
-    "DISABLE_AUTH": "true"
-  },
+  "postCreateCommand": "R -e \"renv::restore(prompt = FALSE)\"",
   "customizations": {
     "vscode": {
       "extensions": [
