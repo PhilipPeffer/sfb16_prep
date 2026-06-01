@@ -74,7 +74,7 @@ per_game_avg <- top50_long |>
 
 ```{r}
 #| label: fig-violin
-#| fig-height: 5
+#| fig-height: 10
 #| fig-cap: "Violin widths reflect point density; boxes show IQR and median; dots are individual players."
 
 pos_levels <- c("QB", "RB", "WR", "TE")
@@ -121,7 +121,7 @@ p |>
 
 ```{r}
 #| label: fig-violin2
-#| fig-height: 5
+#| fig-height: 10
 #| fig-cap: "Violin widths reflect point density; boxes show IQR and median; dots are individual players."
 
 set.seed(42)
@@ -166,7 +166,7 @@ p |>
 
 ```{r}
 #| label: fig-violin3
-#| fig-height: 5
+#| fig-height: 10
 #| fig-cap: "Violin widths reflect point density; boxes show IQR and median; dots are individual players."
 
 set.seed(42)
