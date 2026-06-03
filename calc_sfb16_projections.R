@@ -7,12 +7,14 @@ season <- readRDS("data/sfb16_season_totals.rds")
 # 1. make position-specific linear model of ppr pts to sfb16 pts from 2025 data
 # 2. use the models to make predictions on FantasyPros ppr projections
 calc_proj_pts <- function(stats, pos) {
-  proj <- read_csv(paste0("data/FantasyPros_Fantasy_Football_Projections_", pos, ".csv"), skip_empty_rows=TRUE)
+  proj <- read_csv(paste0("data/FantasyPros_Fantasy_Football_Projections_", pos, ".csv"), skip_empty_rows=TRUE, show_col_types = FALSE)
   proj <- proj |> slice(c(-1, -n()))
   
   m <- lm(total_sfb16_fpts ~ total_ppr_fpts, data=(stats |> filter(position == pos)))
   r <- summary(m)$adj.r.squared
-  print(paste0(pos, " R-squared: ", r))
+  print(paste0(pos, " Model:"))
+  print(m$coefficients)
+  print(paste0("R-squared: ", r))
   
   y <- predict(m, newdata=(proj |> select(FPTS) |> rename(total_ppr_fpts = FPTS)))
   return(bind_cols(Player=proj$Player, Pos=pos, ppr_proj=proj$FPTS, sfb16_fpts_proj=y))
