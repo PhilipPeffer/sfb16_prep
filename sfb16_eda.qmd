@@ -441,3 +441,10 @@ season |>
   ) +
   theme(panel.grid.major.y = element_blank())
 ```
+
+## Value-Based Drafting (VBD) Rankings
+
+```{r}
+proj <- readRDS("data/sfb16_projections.rds")
+print(proj, n=240)
+```
