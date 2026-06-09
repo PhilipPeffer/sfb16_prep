@@ -1,0 +1,24 @@
+{
+  "name": "sfb16_prep",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "forwardPorts": [8787],
+  "portsAttributes": {
+    "8787": {
+      "label": "RStudio Server",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postStartCommand": "sudo rstudio-server start",
+  "postCreateCommand": "RENV_PATHS_CACHE=/usr/local/share/renv/cache R -e \"renv::restore(prompt = FALSE)\"",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "quarto.quarto",
+        "reditorsupport.r"
+      ]
+    }
+  }
+}
