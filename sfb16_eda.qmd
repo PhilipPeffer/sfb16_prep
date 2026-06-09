@@ -17,7 +17,7 @@ execute:
 ```{r}
 #| label: setup
 #| include: false
-for (pkg in c("patchwork", "scales", "plotly")) {
+for (pkg in c("patchwork", "scales", "plotly", "DT")) {
   if (!requireNamespace(pkg, quietly = TRUE)) renv::install(pkg)
 }
 suppressPackageStartupMessages({
@@ -25,6 +25,7 @@ suppressPackageStartupMessages({
   library(patchwork)
   library(scales)
   library(plotly)
+  library(DT)
 })
 
 pos_colors <- c(QB = "#E15759", RB = "#59A14F", WR = "#4E79A7", TE = "#B07AA1")
@@ -445,6 +446,8 @@ season |>
 ## Value-Based Drafting (VBD) Rankings
 
 ```{r}
+#| label: sortable-table
+#| echo: false
 proj <- readRDS("data/sfb16_projections.rds")
-print(proj, n=240)
+datatable(proj, options = list(pageLength = 10))
 ```
