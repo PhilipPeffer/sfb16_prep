@@ -38,8 +38,8 @@ weighted_proj <- function(vals, weights) {
   sum(vals[available] * w / sum(w))
 }
 
-veteran_weights <- c(0.302, 0.245, 0.189, 0.170, 0.094)
-rookie_weights  <- c(0.333, 0.271, 0.208, 0.188)
+veteran_weights <- c(0.30, 0.25, 0.21, 0.19, 0.05)
+rookie_weights  <- c(0.316, 0.263, 0.221, 0.2)
 
 tradyr <- tradyr |>
   rowwise() |>
