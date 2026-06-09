@@ -29,25 +29,30 @@ tradyr <- as_tibble(raw$players) |>
   )
 
 # ── Weighted projected season totals ──────────────────────────────────────────
-# Non-rookie: weights sum to 1.000 across 5 projection sources + bonus credit
-# Rookie:     weights sum to 1.000 across 4 sources (no lastSeasonSfb) + bonus credit
+# Weights are renormalized across whichever sources are available for each player
+# (0 or NA treated as missing). bonus credit is always additive on top.
+weighted_proj <- function(vals, weights) {
+  available <- !is.na(vals) & vals > 0
+  if (!any(available)) return(NA_real_)
+  w <- weights[available]
+  sum(vals[available] * w / sum(w))
+}
+
+veteran_weights <- c(0.302, 0.245, 0.189, 0.170, 0.094)
+rookie_weights  <- c(0.333, 0.271, 0.208, 0.188)
+
 tradyr <- tradyr |>
+  rowwise() |>
   mutate(
-    proj_pts = if_else(
-      tradyrIsRookie,
-      0.333 * projTradyrPts +
-        0.271 * projMikeClayPts +
-        0.208 * projFantasyProsPts +
-        0.188 * projSleeperPts +
-        meanBonusCredit,
-      0.302 * projTradyrPts +
-        0.245 * projMikeClayPts +
-        0.189 * projFantasyProsPts +
-        0.170 * projSleeperPts +
-        0.094 * lastSeasonSfb +
-        meanBonusCredit
-    )
-  )
+    proj_pts = weighted_proj(
+      if (tradyrIsRookie)
+        c(projTradyrPts, projMikeClayPts, projFantasyProsPts, projSleeperPts)
+      else
+        c(projTradyrPts, projMikeClayPts, projFantasyProsPts, projSleeperPts, lastSeasonSfb),
+      if (tradyrIsRookie) rookie_weights else veteran_weights
+    ) + meanBonusCredit
+  ) |>
+  ungroup()
 
 # ── VOLS / VOPR / VBD ─────────────────────────────────────────────────────────
 # League structure: 12 teams, 20 roster spots each (10 starters + 10 bench)
