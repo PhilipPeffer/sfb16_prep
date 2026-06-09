@@ -459,6 +459,6 @@ datatable(proj, options = list(pageLength = 10))
 ```{r}
 #| label: vbd_rankings2
 
-proj2 <- readRDS("data/tradyr_vbd.rds")
+proj2 <- readRDS("data/tradyr_vbd.rds") |> arrange(adp)
 datatable(proj2, options = list(pageLength = 10))
 ```
