@@ -16,7 +16,7 @@ raw <- jsonlite::fromJSON(
 tradyr <- as_tibble(raw$players) |>
   rename(meanBonusCredit = bonusCredit.mean) |>
   select(
-    playerKey, name, position,
+    playerKey, playerId, name, position,
     projCompositePts, projSleeperPts, projFantasyProsPts,
     projMikeClayPts, projTradyrPts,
     tradyrIsRookie, lastSeasonSfb, meanBonusCredit
@@ -82,6 +82,27 @@ tradyr <- tradyr |>
   ) |>
   select(-is_qb, -pos_rank) |>
   arrange(vbd_rank)
+
+# ── Fetch mock ADP ────────────────────────────────────────────────────────────
+resp_adp <- httr::GET("https://api.tradyr.app/api/sfb/mock-adp?force=1")
+httr::stop_for_status(resp_adp)
+
+raw_adp <- jsonlite::fromJSON(
+  httr::content(resp_adp, as = "text", encoding = "UTF-8"),
+  simplifyDataFrame = TRUE,
+  flatten = TRUE
+)
+
+mock_adp <- as_tibble(raw_adp$players) |>
+  select(playerId, adp) |>
+  mutate(playerId = as.character(playerId))
+
+# ── Join ADP and calculate value vs ADP ───────────────────────────────────────
+# value_vs_adp > 0 means player is ranked higher by VBD than draft consensus
+tradyr <- tradyr |>
+  mutate(playerId = as.character(playerId)) |>
+  left_join(mock_adp, by = "playerId") |>
+  mutate(value_vs_adp = adp - vbd_rank)
 
 # ── Save output ────────────────────────────────────────────────────────────────
 saveRDS(tradyr, "data/tradyr_vbd.rds")
