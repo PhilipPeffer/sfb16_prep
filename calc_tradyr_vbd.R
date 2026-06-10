@@ -48,9 +48,10 @@ tradyr <- tradyr |>
       if (tradyrIsRookie)
         c(projTradyrPts, projMikeClayPts, projFantasyProsPts, projSleeperPts)
       else
-        c(projTradyrPts, projMikeClayPts, projFantasyProsPts, projSleeperPts, lastSeasonSfb),
+        c(projTradyrPts, projMikeClayPts, projFantasyProsPts, projSleeperPts, (lastSeasonSfb - meanBonusCredit)),
       if (tradyrIsRookie) rookie_weights else veteran_weights
-    ) + meanBonusCredit
+    ) + meanBonusCredit,
+    weekly_pts = proj_pts/17
   ) |>
   ungroup()
 
