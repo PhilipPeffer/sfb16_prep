@@ -106,24 +106,31 @@ tradyr <- tradyr |>
   mutate(value_vs_adp = adp - vbd_rank)
 
 # ── VBD tiers ─────────────────────────────────────────────────────────────────
-# Players sorted by vbd_rank; gap to next player computed from VBD values.
+# Players sorted by descending VBD; gap to next player computed from VBD values.
 # A new tier starts when the drop to the next player exceeds 2x the local
 # median gap (rolling window of ±5 neighbours).
-vbd_sorted <- tradyr |> arrange(vbd_rank) |> pull(VBD)
-gaps        <- abs(diff(vbd_sorted))          # drop from player i to i+1
-window      <- 5
+assign_tiers <- function(vbd, window = 5) {
+  ord  <- order(-vbd)
+  gaps <- abs(diff(vbd[ord]))
+  if (length(gaps) == 0) return(rep(1L, length(vbd)))
 
-local_median_gap <- map_dbl(seq_along(gaps), \(i) {
-  idx <- max(1L, i - window):min(length(gaps), i + window)
-  median(gaps[idx])
-})
+  local_median_gap <- map_dbl(seq_along(gaps), \(i) {
+    idx <- max(1L, i - window):min(length(gaps), i + window)
+    median(gaps[idx])
+  })
 
-tier_break <- gaps > 2 * local_median_gap     # TRUE where a new tier starts
-tier       <- cumsum(c(TRUE, tier_break))      # tier 1 for first player
+  tier_break <- gaps > 2 * local_median_gap   # TRUE where a new tier starts
+  tiers      <- cumsum(c(TRUE, tier_break))    # tier 1 for first player
+
+  tiers[order(ord)]                            # back to original row order
+}
 
 tradyr <- tradyr |>
-  arrange(vbd_rank) |>
-  mutate(tier = tier)
+  mutate(tier = assign_tiers(VBD)) |>
+  group_by(position) |>
+  mutate(pos_tier = assign_tiers(VBD)) |>
+  ungroup() |>
+  arrange(vbd_rank)
 
 # ── Save output ────────────────────────────────────────────────────────────────
 saveRDS(tradyr, "data/tradyr_vbd.rds")
