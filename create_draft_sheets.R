@@ -4,7 +4,7 @@ suppressPackageStartupMessages(library(tidyverse))
 # Per-position caps sized so each sheet fits one printed letter page.
 # If caps grow much beyond this, add `break-before: page` to the WR section.
 POS_CAPS    <- c(QB = 30, RB = 60, WR = 75, TE = 35)
-OVERALL_CAP <- 240   # 20 roster spots x 12 teams
+OVERALL_CAP <- 240   # 20 roster spots x 12 teams; 80 rows/column fits one page at 7.5pt
 OUT_DIR     <- "reports"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -58,10 +58,10 @@ build_section_html <- function(df, pos) {
   )
 }
 
-build_overall_table_html <- function(df) {
+build_overall_table_html <- function(df, rank_offset = 0) {
   rows <- df |>
     mutate(
-      rn         = row_number(),
+      rn         = row_number() + rank_offset,
       tier_break = coalesce(tier != lag(tier), FALSE),
       row_html   = sprintf(
         '<tr%s><td class="num">%d</td><td class="name">%s</td><td>%s</td><td class="num">%s</td><td class="num">%s</td><td class="num">%s</td><td class="num">%s</td><td class="num">%d</td><td class="num">%d</td></tr>',
@@ -103,8 +103,6 @@ tr { break-inside: avoid; page-break-inside: avoid; }
 .pos-section h2 { break-after: avoid; }
 tr.tier-break td { border-top: 1.5px solid #444; }
 tbody tr:nth-child(even) td { background: #f2f2f2; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-.overall { max-width: 4.5in; }
-.overall thead { display: table-header-group; }
 '
 
 build_sheet <- function(df, sort_by, title, out_file) {
@@ -142,6 +140,14 @@ build_overall_sheet <- function(df, sort_by, title, out_file) {
   ) |>
     slice_head(n = OVERALL_CAP)
 
+  # Split into 3 chunks so the single ranking flows down each printed column
+  chunk_size <- ceiling(nrow(df) / 3)
+  chunks <- split(df, ceiling(seq_len(nrow(df)) / chunk_size))
+  cols <- imap_chr(chunks, \(chunk, i) {
+    offset <- (as.integer(i) - 1) * chunk_size
+    paste0('<div class="col">\n', build_overall_table_html(chunk, offset), "</div>\n")
+  })
+
   html <- paste0(
     "<!DOCTYPE html>\n<html>\n<head>\n",
     '<meta charset="utf-8">\n',
@@ -151,8 +157,8 @@ build_overall_sheet <- function(df, sort_by, title, out_file) {
     "<h1>", esc_html(title), "</h1>\n",
     '<p class="subtitle">Generated ', format(Sys.Date(), "%B %d, %Y"),
     " &bull; Pts/Wk = projected SFB16 points per week &bull; +/-ADP = ADP minus VBD rank (positive = value)</p>\n",
-    '<div class="overall">\n',
-    build_overall_table_html(df),
+    '<div class="grid">\n',
+    paste(cols, collapse = ""),
     "</div>\n</body>\n</html>"
   )
 
