@@ -128,7 +128,7 @@ assign_tiers <- function(vbd, window = 5) {
 tradyr <- tradyr |>
   mutate(tier = assign_tiers(VBD)) |>
   group_by(position) |>
-  mutate(pos_tier = assign_tiers(VBD)) |>
+  mutate(pos_tier = assign_tiers(VBD, window = 2)) |>
   ungroup() |>
   arrange(vbd_rank)
 
