@@ -33,12 +33,13 @@ build_section_html <- function(df, pos) {
     mutate(
       rn         = row_number(),
       tier_break = coalesce(tier != lag(tier), FALSE),
+      delta_pts  = weekly_pts - lead(weekly_pts),
       row_html   = sprintf(
         '<tr%s><td class="num">%d</td><td class="name">%s</td><td class="num">%s</td><td class="num">%s</td><td class="num">%s</td><td class="num">%s</td><td class="num">%d</td><td class="num">%d</td></tr>',
         if_else(tier_break, ' class="tier-break"', ""),
         rn,
         esc_html(name),
-        fmt_num(weekly_pts, 1),
+        fmt_num(delta_pts, 1),
         fmt_num(VBD, 0),
         fmt_num(adp, 1),
         fmt_num(value_vs_adp, 0, signed = TRUE),
@@ -51,7 +52,7 @@ build_section_html <- function(df, pos) {
   paste0(
     '<section class="pos-section">\n',
     "<h2>", pos, "</h2>\n",
-    '<table>\n<thead><tr><th>#</th><th>Player</th><th>Pts/Wk</th><th>VBD</th><th>ADP</th><th>+/-ADP</th><th>Tier</th><th>PTier</th></tr></thead>\n<tbody>\n',
+    '<table>\n<thead><tr><th>#</th><th>Player</th><th>Δ Pts/Wk</th><th>VBD</th><th>ADP</th><th>+/-ADP</th><th>Tier</th><th>PTier</th></tr></thead>\n<tbody>\n',
     paste(rows, collapse = "\n"),
     "\n</tbody>\n</table>\n</section>\n"
   )
@@ -92,7 +93,7 @@ build_sheet <- function(df, sort_by, title, out_file) {
     "</head>\n<body>\n",
     "<h1>", esc_html(title), "</h1>\n",
     '<p class="subtitle">Generated ', format(Sys.Date(), "%B %d, %Y"),
-    " &bull; Pts/Wk = projected SFB16 points per week &bull; +/-ADP = ADP minus VBD rank (positive = value)</p>\n",
+    " &bull; &Delta; Pts/Wk = pts/wk edge over next player in section &bull; +/-ADP = ADP minus VBD rank (positive = value)</p>\n",
     '<div class="grid">\n',
     '<div class="col">\n', col1, "</div>\n",
     '<div class="col">\n', col2, "</div>\n",
