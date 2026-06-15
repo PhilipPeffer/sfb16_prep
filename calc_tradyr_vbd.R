@@ -33,20 +33,20 @@ tradyr <- as_tibble(raw$players) |>
 # (0 or NA treated as missing). bonus credit is always additive on top.
 weighted_proj <- function(vals, weights) {
   available <- !is.na(vals) & vals > 0
-  if (!any(available)) return(NA_real_)
+  if (!any(available)) return(0)
   w <- weights[available]
   sum(vals[available] * w / sum(w))
 }
 
-veteran_weights <- c(0.30, 0.25, 0.21, 0.19, 0.05)
-rookie_weights  <- c(0.316, 0.263, 0.221, 0.2)
+veteran_weights <- c(0.19, 0.285, 0.285, 0.19, 0.05)
+rookie_weights  <- c(0.375, 0.375, 0.25)
 
 tradyr <- tradyr |>
   rowwise() |>
   mutate(
     proj_pts = weighted_proj(
       if (tradyrIsRookie)
-        c(projTradyrPts, projMikeClayPts, projFantasyProsPts, projSleeperPts)
+        c(projMikeClayPts, projFantasyProsPts, projSleeperPts)
       else
         c(projTradyrPts, projMikeClayPts, projFantasyProsPts, projSleeperPts, (lastSeasonSfb - meanBonusCredit)),
       if (tradyrIsRookie) rookie_weights else veteran_weights
