@@ -445,9 +445,20 @@ season |>
 
 ## Value-Based Drafting (VBD) Rankings
 
+### Adjusted FantasyPros (consensus ESPN & CBS) rankings
+
 ```{r}
-#| label: sortable-table
-#| echo: false
+#| label: vbd_rankings1
+
 proj <- readRDS("data/sfb16_projections.rds")
 datatable(proj, options = list(pageLength = 10))
+```
+
+### Adjusted Tradyr rankings
+
+```{r}
+#| label: vbd_rankings2
+
+proj2 <- readRDS("data/tradyr_vbd.rds") |> arrange(adp)
+datatable(proj2, options = list(pageLength = 10))
 ```
