@@ -163,7 +163,7 @@ build_adp_table <- function(df, n = 20) {
 
 build_tier_table <- function(df) {
   d <- df |>
-    filter(tier_changed | pos_tier_changed) |>
+    filter(pos_tier_changed) |>
     arrange(vbd_rank_new)
 
   if (nrow(d) == 0) return("<p><em>No tier changes.</em></p>")
@@ -207,7 +207,7 @@ build_simple_table <- function(df, is_new) {
 # ── Summary counts ────────────────────────────────────────────────────────────
 n_movers_5  <- sum(abs(both$delta_vbd_rank) >= 5,  na.rm = TRUE)
 n_movers_10 <- sum(abs(both$delta_vbd_rank) >= 10, na.rm = TRUE)
-n_tier_chg  <- sum(both$tier_changed | both$pos_tier_changed, na.rm = TRUE)
+n_tier_chg  <- sum(both$pos_tier_changed, na.rm = TRUE)
 
 summary_boxes <- paste0(
   '<div class="summary-grid">',
@@ -237,7 +237,7 @@ html <- paste0(
   build_proj_table(both),
   '<h2>ADP Changes (top 20)</h2>',
   build_adp_table(both),
-  '<h2>Tier Changes</h2>',
+  '<h2>Positional Tier Changes</h2>',
   build_tier_table(both),
   '<h2>New Players</h2>',
   build_simple_table(new_players, is_new = TRUE),
