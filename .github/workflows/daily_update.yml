@@ -1,0 +1,50 @@
+name: Daily VBD Update
+
+on:
+  schedule:
+    - cron: '0 12 * * *'  # 08:00 ET (noon UTC)
+  workflow_dispatch:        # manual trigger for testing
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.6.0'
+
+      - uses: r-lib/actions/setup-renv@v2
+
+      - name: Snapshot previous data
+        run: |
+          if [ -f data/tradyr_vbd.rds ]; then
+            cp data/tradyr_vbd.rds data/tradyr_vbd_prev.rds
+          fi
+
+      - name: Fetch fresh data
+        run: Rscript calc_tradyr_vbd.R
+
+      - name: Generate changes report
+        run: Rscript create_changes_report.R
+
+      - name: Regenerate draft sheets
+        run: Rscript create_draft_sheets.R
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/tradyr_vbd.rds \
+                  data/tradyr_vbd.csv \
+                  reports/
+          git diff --staged --quiet || \
+            git commit -m "chore: daily VBD update $(date -u +%Y-%m-%d)"
+          git push
