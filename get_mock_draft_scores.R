@@ -16,8 +16,15 @@ if (!file.exists(PROJ_FILE)) {
   stop("Projections file '", PROJ_FILE, "' not found. Run calc_tradyr_vbd.R first.")
 }
 
-proj <- readRDS(PROJ_FILE) |>
+proj_raw <- readRDS(PROJ_FILE)
+proj <- proj_raw |>
   transmute(playerId = as.character(playerId), proj_position = position, proj_pts)
+
+# Baseline for undrafted/unprojected players: the first replacement player's
+# projected total (240th player overall, where VOPR == 0 in tradyr_vbd.rds).
+BASELINE_PTS <- proj_raw |>
+  slice_min(abs(VOPR), n = 1, with_ties = FALSE) |>
+  pull(proj_pts)
 
 # ── Optimal SFB16 starting line-up: best 2 QB + best 8 RB/WR/TE ────────────────
 optimal_starter_total <- function(position, proj_pts) {
@@ -51,14 +58,16 @@ process_draft <- function(draft_id) {
     ) |>
     left_join(proj, by = c("player_id" = "playerId")) |>
     mutate(
-      position = coalesce(proj_position, meta_position),
-      proj_pts = coalesce(proj_pts, 0)
+      position    = coalesce(proj_position, meta_position),
+      is_baseline = is.na(proj_pts),
+      proj_pts    = coalesce(proj_pts, BASELINE_PTS)
     )
 
-  missing <- picks |> filter(proj_pts == 0)
+  missing <- picks |> filter(is_baseline)
   if (nrow(missing) > 0) {
     warning("Draft ", draft_id, ": ", nrow(missing),
-            " drafted player(s) had no projection (scored 0): ",
+            " drafted player(s) had no projection (assigned baseline ",
+            round(BASELINE_PTS, 1), " pts): ",
             paste(unique(missing$player_id), collapse = ", "), call. = FALSE)
   }
 
