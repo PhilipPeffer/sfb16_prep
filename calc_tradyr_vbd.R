@@ -14,23 +14,20 @@ raw <- jsonlite::fromJSON(
 
 # ── Parse and select fields ────────────────────────────────────────────────────
 tradyr <- as_tibble(raw$players) |>
-  rename(meanBonusCredit = bonusCredit.mean) |>
   select(
     playerKey, playerId, name, position,
-    projCompositePts, projSleeperPts, projFantasyProsPts,
-    projMikeClayPts, projTradyrPts,
-    tradyrIsRookie, lastSeasonSfb, meanBonusCredit
+    projMikeClayBasePts, projFantasyProsBasePts, projSleeperBasePts,
+    tradyrIsRookie, lastSeasonSfb
   ) |>
   filter(position %in% c("QB", "RB", "WR", "TE")) |>
   mutate(
-    tradyrIsRookie  = as.logical(tradyrIsRookie),
-    lastSeasonSfb   = coalesce(as.numeric(lastSeasonSfb), 0),
-    meanBonusCredit = coalesce(as.numeric(meanBonusCredit), 0)
+    tradyrIsRookie = as.logical(tradyrIsRookie),
+    lastSeasonSfb  = coalesce(as.numeric(lastSeasonSfb), 0)
   )
 
 # ── Weighted projected season totals ──────────────────────────────────────────
-# Weights are renormalized across whichever sources are available for each player
-# (0 or NA treated as missing). bonus credit is always additive on top.
+# Pre-bonus projection blends the three BasePts sources. Weights are renormalized
+# across whichever sources are available for each player (0 or NA = missing).
 weighted_proj <- function(vals, weights) {
   available <- !is.na(vals) & vals > 0
   if (!any(available)) return(0)
@@ -38,22 +35,59 @@ weighted_proj <- function(vals, weights) {
   sum(vals[available] * w / sum(w))
 }
 
-veteran_weights <- c(0.19, 0.285, 0.285, 0.19, 0.05)
-rookie_weights  <- c(0.375, 0.375, 0.25)
+base_weights <- c(0.375, 0.375, 0.25)   # MikeClay, FantasyPros, Sleeper
 
 tradyr <- tradyr |>
   rowwise() |>
   mutate(
-    proj_pts = weighted_proj(
-      if (tradyrIsRookie)
-        c(projMikeClayPts, projFantasyProsPts, projSleeperPts)
-      else
-        c(projTradyrPts, projMikeClayPts, projFantasyProsPts, projSleeperPts, (lastSeasonSfb - meanBonusCredit)),
-      if (tradyrIsRookie) rookie_weights else veteran_weights
-    ) + meanBonusCredit,
-    weekly_pts = proj_pts/17
+    pre_bonus_proj_pts = weighted_proj(
+      c(projMikeClayBasePts, projFantasyProsBasePts, projSleeperBasePts),
+      base_weights
+    )
   ) |>
   ungroup()
+
+# ── Positional-tier bonus ──────────────────────────────────────────────────────
+# Rank players within position by pre-bonus points, then add a fixed bonus based
+# on the tier the player falls into. Rank thresholds below are cumulative upper
+# bounds (e.g. QB "<= 12" means ranks 7-12). WR's lowest bucket (37-60) extends
+# open-ended to 61+.
+tier_bonus_fn <- function(position, rank) {
+  case_when(
+    position == "QB" & rank <=  6 ~ 178.33,
+    position == "QB" & rank <= 12 ~ 134.00,
+    position == "QB"             ~  89.00,
+    position == "RB" & rank <=  6 ~ 157.00,
+    position == "RB" & rank <= 12 ~ 103.00,
+    position == "RB" & rank <= 24 ~  72.50,
+    position == "RB" & rank <= 36 ~  45.17,
+    position == "RB"             ~  26.08,
+    position == "TE" & rank <=  6 ~ 147.67,
+    position == "TE" & rank <= 12 ~  82.67,
+    position == "TE"             ~  58.00,
+    position == "WR" & rank <=  6 ~ 298.00,
+    position == "WR" & rank <= 12 ~ 229.67,
+    position == "WR" & rank <= 24 ~ 176.33,
+    position == "WR" & rank <= 36 ~ 144.00,
+    position == "WR"             ~ 104.33,
+    TRUE ~ 0
+  )
+}
+
+tradyr <- tradyr |>
+  group_by(position) |>
+  mutate(pos_rank_prebonus = min_rank(desc(pre_bonus_proj_pts))) |>
+  ungroup() |>
+  mutate(tier_bonus = tier_bonus_fn(position, pos_rank_prebonus))
+
+# ── Final projection ───────────────────────────────────────────────────────────
+# Add the tier bonus, then blend in last season's SFB total for veterans.
+tradyr <- tradyr |>
+  mutate(
+    proj_pts   = pre_bonus_proj_pts + tier_bonus,
+    proj_pts   = if_else(tradyrIsRookie, proj_pts, 0.85 * proj_pts + 0.15 * lastSeasonSfb),
+    weekly_pts = proj_pts / 17
+  )
 
 # ── VOLS / VOPR / VBD ─────────────────────────────────────────────────────────
 # League structure: 12 teams, 20 roster spots each (10 starters + 10 bench)
