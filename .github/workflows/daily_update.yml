@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0   # full history: build_vbd_history.R reads past snapshots
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -38,7 +38,7 @@ jobs:
       - name: Regenerate draft sheets
         run: Rscript create_draft_sheets.R
 
-      - name: Commit and push
+      - name: Commit daily update
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -47,4 +47,14 @@ jobs:
                   reports/
           git diff --staged --quiet || \
             git commit -m "chore: daily VBD update $(date -u +%Y-%m-%d)"
-          git push
+
+      - name: Rebuild VBD history
+        # Runs after the daily commit so today's snapshot is in git history.
+        run: |
+          Rscript build_vbd_history.R
+          git add data/vbd_history.rds
+          git diff --staged --quiet || \
+            git commit -m "chore: rebuild VBD history $(date -u +%Y-%m-%d)"
+
+      - name: Push
+        run: git push
