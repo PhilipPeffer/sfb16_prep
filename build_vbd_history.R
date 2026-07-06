@@ -15,9 +15,10 @@ KEEP_COLS <- c("playerKey", "name", "position", "adp", "vbd_rank",
                "VBD", "weekly_pts", "proj_pts", "tier", "pos_tier")
 
 # (sha, ISO commit date) for every commit that touched the tracked file, oldest
-# first so the last commit on a given day wins the de-dup below.
+# first so the last commit on a given day wins the de-dup below. Tab-delimited
+# (%x09) so system2 doesn't split the format string at a space.
 log_lines <- system2("git",
-  c("log", "--reverse", "--format=%H %cI", "--", TRACKED_FILE),
+  c("log", "--reverse", "--format=%H%x09%cI", "--", TRACKED_FILE),
   stdout = TRUE)
 
 if (length(log_lines) == 0) {
@@ -25,7 +26,7 @@ if (length(log_lines) == 0) {
 }
 
 commits <- tibble(raw = log_lines) |>
-  separate(raw, into = c("sha", "commit_iso"), sep = " ", extra = "merge") |>
+  separate(raw, into = c("sha", "commit_iso"), sep = "\t", extra = "merge") |>
   mutate(snapshot_date = as.Date(substr(commit_iso, 1, 10)))
 
 read_snapshot <- function(sha, snapshot_date) {
