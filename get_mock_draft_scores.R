@@ -21,9 +21,9 @@ proj <- proj_raw |>
   transmute(playerId = as.character(playerId), proj_position = position, proj_pts)
 
 # Baseline for undrafted/unprojected players: the first replacement player's
-# projected total (240th player overall, where VOPR == 0 in tradyr_vbd.rds).
+# projected total (240th player overall, where VORP == 0 in tradyr_vbd.rds).
 BASELINE_PTS <- proj_raw |>
-  slice_min(abs(VOPR), n = 1, with_ties = FALSE) |>
+  slice_min(abs(VORP), n = 1, with_ties = FALSE) |>
   pull(proj_pts)
 
 # ── Optimal SFB16 starting line-up: best 2 QB + best 8 RB/WR/TE ────────────────
