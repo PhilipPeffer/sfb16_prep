@@ -1,8 +1,8 @@
 name: Daily VBD Update
 
 on:
-  schedule:
-    - cron: '0 12 * * *'  # 08:00 ET (noon UTC)
+#  schedule:
+#    - cron: '0 12 * * *'  # 08:00 ET (noon UTC)
   workflow_dispatch:        # manual trigger for testing
 
 jobs:
